@@ -202,7 +202,21 @@ Examples:
     print(f"  Failed: {results['failed']}")
     print(f"  Skipped (existing): {results['skipped']}")
     
-    sys.exit(0 if results['failed'] == 0 else 1)
+    # Only exit with error if failure rate is significant (>5% of attempted downloads)
+    # Some gaps in EPSS data are expected (weekends, holidays, maintenance)
+    total_attempted = results['success'] + results['failed']
+    if total_attempted > 0:
+        failure_rate = results['failed'] / total_attempted
+        # Exit successfully if we got most files (>95% success rate)
+        # or if we have fewer than 10 failures (acceptable for historical gaps)
+        if failure_rate <= 0.05 or results['failed'] <= 10:
+            print(f"  Note: {results['failed']} missing files is within expected range (data gaps)")
+            sys.exit(0)
+        else:
+            print(f"  Warning: High failure rate ({failure_rate:.1%})")
+            sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
