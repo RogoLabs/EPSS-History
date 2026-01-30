@@ -1,0 +1,80 @@
+name: Daily EPSS Download
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC (EPSS scores are typically updated overnight)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      download_all:
+        description: 'Download all historical files'
+        required: false
+        default: 'false'
+        type: boolean
+      start_date:
+        description: 'Start date for range download (YYYY-MM-DD)'
+        required: false
+        type: string
+      end_date:
+        description: 'End date for range download (YYYY-MM-DD)'
+        required: false
+        type: string
+
+jobs:
+  download-epss:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      
+      - name: Download EPSS files
+        run: |
+          if [ "${{ github.event.inputs.download_all }}" == "true" ]; then
+            echo "Downloading all historical EPSS files..."
+            python scripts/download_epss.py --all --output-dir data
+          elif [ -n "${{ github.event.inputs.start_date }}" ]; then
+            echo "Downloading EPSS files for date range..."
+            END_DATE_ARG=""
+            if [ -n "${{ github.event.inputs.end_date }}" ]; then
+              END_DATE_ARG="--end ${{ github.event.inputs.end_date }}"
+            fi
+            python scripts/download_epss.py --start "${{ github.event.inputs.start_date }}" $END_DATE_ARG --output-dir data
+          else
+            echo "Downloading yesterday's EPSS file..."
+            python scripts/download_epss.py --today --output-dir data
+          fi
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git add data/
+          if git diff --staged --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push changes
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Get the date for the commit message
+          DOWNLOAD_DATE=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
+          
+          git commit -m "Add EPSS scores for ${DOWNLOAD_DATE}" -m "Automated daily EPSS data download"
+          git push
