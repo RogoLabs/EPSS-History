@@ -4,6 +4,7 @@ Download EPSS (Exploit Prediction Scoring System) CSV files.
 Files are stored in Year/Month folder structure (e.g., 2025/01/).
 """
 
+import gzip
 import os
 import sys
 import requests
@@ -15,12 +16,77 @@ BASE_URL = "https://epss.empiricalsecurity.com/epss_scores-{date}.csv.gz"
 EPSS_START_DATE = datetime(2021, 4, 14)
 
 
-def get_output_path(date: datetime, base_dir: str = "data") -> Path:
+def get_output_path(date: datetime, base_dir: str = "data", compressed: bool = True) -> Path:
     """Generate the output path for a given date in Year/Month format."""
     year = date.strftime("%Y")
     month = date.strftime("%m")
-    filename = f"epss_scores-{date.strftime('%Y-%m-%d')}.csv.gz"
+    ext = ".csv.gz" if compressed else ".csv"
+    filename = f"epss_scores-{date.strftime('%Y-%m-%d')}{ext}"
     return Path(base_dir) / year / month / filename
+
+
+def decompress_file(gz_path: Path) -> bool:
+    """
+    Decompress a .gz file and keep the original.
+    
+    Args:
+        gz_path: Path to the .gz file
+        
+    Returns:
+        True if decompression was successful, False otherwise
+    """
+    if not gz_path.exists():
+        print(f"File not found: {gz_path}")
+        return False
+    
+    # Output path without .gz extension
+    output_path = gz_path.with_suffix('')
+    
+    if output_path.exists():
+        print(f"Already decompressed: {output_path}")
+        return True
+    
+    try:
+        with gzip.open(gz_path, 'rb') as f_in:
+            with open(output_path, 'wb') as f_out:
+                f_out.write(f_in.read())
+        print(f"Decompressed: {output_path}")
+        return True
+    except Exception as e:
+        print(f"Error decompressing {gz_path}: {e}")
+        return False
+
+
+def decompress_all(base_dir: str = "data") -> dict:
+    """
+    Decompress all .gz files in the data directory.
+    
+    Args:
+        base_dir: Base directory containing the files
+        
+    Returns:
+        Dictionary with counts of successful and failed decompressions
+    """
+    results = {"success": 0, "failed": 0, "skipped": 0}
+    base_path = Path(base_dir)
+    
+    if not base_path.exists():
+        print(f"Directory not found: {base_dir}")
+        return results
+    
+    gz_files = list(base_path.rglob("*.csv.gz"))
+    print(f"Found {len(gz_files)} compressed files to process")
+    
+    for gz_file in gz_files:
+        csv_file = gz_file.with_suffix('')
+        if csv_file.exists():
+            results["skipped"] += 1
+        elif decompress_file(gz_file):
+            results["success"] += 1
+        else:
+            results["failed"] += 1
+    
+    return results
 
 
 def download_epss_file(date: datetime, base_dir: str = "data", overwrite: bool = False) -> bool:
@@ -139,6 +205,9 @@ Examples:
   
   # Download a specific date
   python download_epss.py --date 2024-06-15
+  
+  # Decompress all downloaded files
+  python download_epss.py --decompress
         """
     )
     
@@ -156,13 +225,24 @@ Examples:
                         help="Output directory (default: data)")
     parser.add_argument("--overwrite", action="store_true",
                         help="Overwrite existing files")
+    parser.add_argument("--decompress", action="store_true",
+                        help="Decompress all .gz files in the data directory")
     
     args = parser.parse_args()
     
     # Validate arguments
-    if not any([args.today, args.all, args.date, args.start]):
+    if not any([args.today, args.all, args.date, args.start, args.decompress]):
         parser.print_help()
         sys.exit(1)
+    
+    # Handle decompress-only mode
+    if args.decompress and not any([args.today, args.all, args.date, args.start]):
+        results = decompress_all(args.output_dir)
+        print(f"\nDecompression complete:")
+        print(f"  Decompressed: {results['success']}")
+        print(f"  Failed: {results['failed']}")
+        print(f"  Skipped (already exists): {results['skipped']}")
+        sys.exit(0 if results['failed'] == 0 else 1)
     
     if args.today:
         success = download_today(args.output_dir)

@@ -74,6 +74,9 @@ python scripts/download_epss.py --start 2024-01-01 --end 2024-12-31
 # Download a specific date
 python scripts/download_epss.py --date 2024-06-15
 
+# Decompress all downloaded .gz files
+python scripts/download_epss.py --decompress
+
 # Specify custom output directory
 python scripts/download_epss.py --today --output-dir my_data
 ```
