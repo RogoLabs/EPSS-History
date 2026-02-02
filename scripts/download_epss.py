@@ -180,9 +180,9 @@ def download_historical(start_date: datetime = None, end_date: datetime = None,
 
 
 def download_today(base_dir: str = "data") -> bool:
-    """Download EPSS file for yesterday (most recent available)."""
-    yesterday = datetime.now() - timedelta(days=1)
-    return download_epss_file(yesterday, base_dir)
+    """Download EPSS file for today (current day's scores)."""
+    today = datetime.now()
+    return download_epss_file(today, base_dir)
 
 
 def main():
@@ -194,7 +194,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Download yesterday's file (daily update)
+  # Download today's file (daily update)
   python download_epss.py --today
   
   # Download all historical files
@@ -212,7 +212,7 @@ Examples:
     )
     
     parser.add_argument("--today", action="store_true",
-                        help="Download yesterday's EPSS file (most recent available)")
+                        help="Download today's EPSS file (current day's scores)")
     parser.add_argument("--all", action="store_true",
                         help="Download all historical EPSS files")
     parser.add_argument("--date", type=str,

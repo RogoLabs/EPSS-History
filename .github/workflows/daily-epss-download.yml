@@ -2,8 +2,8 @@ name: Daily EPSS Download
 
 on:
   schedule:
-    # Run daily at 6:00 AM UTC (EPSS scores are typically updated overnight)
-    - cron: '0 6 * * *'
+    # Run daily at 2:00 PM UTC (EPSS scores are published around 1:30 PM UTC)
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       download_all:
@@ -78,8 +78,8 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Get the date for the commit message
-          DOWNLOAD_DATE=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
+          # Get today's date for the commit message
+          DOWNLOAD_DATE=$(date +%Y-%m-%d)
           
           git commit -m "Add EPSS scores for ${DOWNLOAD_DATE}" -m "Automated daily EPSS data download"
           git push

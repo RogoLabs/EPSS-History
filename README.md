@@ -34,7 +34,7 @@ Files are downloaded from the EPSS API:
 
 ## Automated Updates
 
-This repository is automatically updated daily via GitHub Actions. The workflow runs at 6:00 AM UTC and downloads the previous day's EPSS scores.
+This repository is automatically updated daily via GitHub Actions. The workflow runs at 2:00 PM UTC and downloads the current day's EPSS scores (published around 1:30 PM UTC).
 
 ### Manual Downloads
 
@@ -62,7 +62,7 @@ pip install -r scripts/requirements.txt
 ### Download Commands
 
 ```bash
-# Download yesterday's file (daily update)
+# Download today's file (daily update)
 python scripts/download_epss.py --today
 
 # Download all historical files
