@@ -2,8 +2,8 @@ name: Daily EPSS Download
 
 on:
   schedule:
-    # Run daily at 2:00 PM UTC / 8:00 AM Central (EPSS scores are published around 1:30 PM UTC)
-    - cron: '0 14 * * *'
+    # Run daily at 1:30 PM UTC / 7:30 AM Central (EPSS scores are published around 1:30 PM UTC)
+    - cron: '30 13 * * *'
   workflow_dispatch:
     inputs:
       download_all:

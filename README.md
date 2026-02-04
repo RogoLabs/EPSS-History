@@ -34,7 +34,7 @@ Files are downloaded from the EPSS API:
 
 ## Automated Updates
 
-This repository is automatically updated daily via GitHub Actions. The workflow runs at 2:00 PM UTC / 8:00 AM Central (after EPSS scores are published around 1:30 PM UTC).
+This repository is automatically updated daily via GitHub Actions. The workflow runs at 1:30 PM UTC / 7:30 AM Central (after EPSS scores are published around 1:30 PM UTC).
 
 ### Manual Downloads
 
