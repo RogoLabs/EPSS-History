@@ -2,7 +2,7 @@ name: Daily EPSS Download
 
 on:
   schedule:
-    # Run daily at 2:00 PM UTC (EPSS scores are published around 1:30 PM UTC)
+    # Run daily at 2:00 PM UTC / 8:00 AM Central (EPSS scores are published around 1:30 PM UTC)
     - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
@@ -53,7 +53,7 @@ jobs:
             fi
             python scripts/download_epss.py --start "${{ github.event.inputs.start_date }}" $END_DATE_ARG --output-dir data
           else
-            echo "Downloading yesterday's EPSS file..."
+            echo "Downloading today's EPSS file..."
             python scripts/download_epss.py --today --output-dir data
           fi
       
