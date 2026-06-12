@@ -24,3 +24,6 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+
+# EPSS decompressed CSV files - only store compressed .csv.gz to keep repo size manageable
+data/**/*.csv
