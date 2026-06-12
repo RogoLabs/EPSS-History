@@ -57,11 +57,6 @@ jobs:
             python scripts/download_epss.py --today --output-dir data
           fi
       
-      - name: Decompress files
-        run: |
-          echo "Decompressing all EPSS files..."
-          python scripts/download_epss.py --decompress --output-dir data
-      
       - name: Check for changes
         id: git-check
         run: |
