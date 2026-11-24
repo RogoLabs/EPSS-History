@@ -53,8 +53,22 @@ jobs:
             fi
             python scripts/download_epss.py --start "${{ github.event.inputs.start_date }}" $END_DATE_ARG --output-dir data
           else
-            echo "Downloading today's EPSS file..."
-            python scripts/download_epss.py --today --output-dir data
+            # Scheduled runs can start many hours late (past midnight UTC), so
+            # `--today` could ask for a file that isn't published yet and skip
+            # the previous day. Fetch a trailing window instead: existing files
+            # are skipped and a not-yet-published day is tolerated.
+            echo "Downloading any missing EPSS files from the last 7 days..."
+            python scripts/download_epss.py \
+              --start "$(date -u -d '7 days ago' +%F)" \
+              --end "$(date -u +%F)" \
+              --output-dir data
+
+            # The range download tolerates gaps, so fail loudly if data goes stale.
+            LATEST=$(ls data/*/*/epss_scores-*.csv.gz | sort | tail -1 | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+            if [[ "$LATEST" < "$(date -u -d '2 days ago' +%F)" ]]; then
+              echo "::error::Newest EPSS file is $LATEST; nothing published for 2+ days"
+              exit 1
+            fi
           fi
       
       - name: Check for changes
